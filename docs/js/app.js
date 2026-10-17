@@ -9,7 +9,7 @@
  const filterRecords=api.filterRecords||((recs,p)=>{const q=String(p.keyword||'').toLowerCase();return recs.filter(r=>(!q||[r.title,r.notes,r.doi,r.technology].join(' ').toLowerCase().includes(q))&&(p.verification==='all'||r.verification===p.verification)&&(p.policy_stage==='all'||r.policy_stage===p.policy_stage)&&(!p.hci_dimension||p.hci_dimension==='all'||r.hci_dimension===p.hci_dimension));});
  const analyze=api.analyze||(recs=>{const cells=rules.hciDimensions.map(h=>rules.policyStages.map(s=>recs.filter(r=>r.hci_dimension===h&&r.policy_stage===s)));const counted=cells.flat(2).length;
    return {cells,count:recs.length,counted,unclassified:recs.length-counted,gaps:cells.flat(1).filter(c=>!c.length).length,traceable:recs.filter(r=>r.policy_linkage==='반영 근거 확인').length,demo:recs.some(r=>r.verification==='시연용 가상자료'),countsByHci:rules.hciDimensions.map((name,i)=>({name,value:cells[i].reduce((a,b)=>a+b.length,0)}))};});
- const state={records:[], warnings:[], selected:null};
+ const state={records:[], warnings:[], selected:null, focus:{i:0,j:0}};
  const html=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const options=(id,values)=>{ const el=$(id);values.forEach(value=>{const node=document.createElement('option');node.value=value;node.textContent=value;el.appendChild(node);});};
  options('verification-filter',rules.verificationStates);
@@ -34,6 +34,8 @@
   $('data-type').textContent=result.demo?'가상 시연 데이터 포함':state.records.length?'사용자 문헌 데이터':'데이터 대기';
   const head=$('heatmap').querySelector('thead'),body=$('heatmap').querySelector('tbody');
   head.innerHTML='<tr><th scope="col">HCI 차원 ↓ / 정책 →</th>'+rules.policyStages.map(s=>`<th scope="col">${html(s)}</th>`).join('')+'</tr>';
+  // 키보드 접근성(Refs #5): 칸은 하나만 Tab으로 들어가고(roving tabindex) 방향키로 옮긴다. 다시 그린 뒤에도 초점을 되돌린다.
+  const hadFocus=!!document.activeElement&&document.activeElement.classList.contains('heat-cell');
   body.replaceChildren();
   rules.hciDimensions.forEach((dimension,i)=>{
     const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=dimension;tr.appendChild(th);
@@ -43,10 +45,12 @@
       button.textContent=String(cell.length);button.title=`${dimension} × ${stage}: ${cell.length}건`;
       button.setAttribute('aria-label',button.title);
       button.setAttribute('aria-pressed',String(!!state.selected && state.selected.stage===stage && state.selected.dimension===dimension));
-      button.addEventListener('click',()=>{state.selected=state.selected && state.selected.stage===stage && state.selected.dimension===dimension?null:{stage,dimension};render();});
+      button.dataset.i=i;button.dataset.j=j;button.tabIndex=(state.focus.i===i&&state.focus.j===j)?0:-1;
+      button.addEventListener('click',()=>{state.focus={i,j};state.selected=state.selected && state.selected.stage===stage && state.selected.dimension===dimension?null:{stage,dimension};render();announce();});
       td.appendChild(button);tr.appendChild(td);
     });body.appendChild(tr);
   });
+  if(hadFocus)body.querySelector(`.heat-cell[data-i="${state.focus.i}"][data-j="${state.focus.j}"]`)?.focus();
   const highest=Math.max(1,...result.countsByHci.map(o=>o.value));
   $('bar-chart').innerHTML=result.countsByHci.map(o=>`<div><div class="bar-top"><span>${html(o.name)}</span><strong>${o.value}</strong></div><div class="track"><div class="fill" style="width:${Math.round(o.value/highest*100)}%"></div></div></div>`).join('');
   const visible=state.selected?rows.filter(r=>r.policy_stage===state.selected.stage && r.hci_dimension===state.selected.dimension):rows;
@@ -66,6 +70,23 @@
   });
   renderWarnings();
  }
+ // 선택 결과를 화면 읽기 프로그램에 알린다.
+ const live=document.createElement('p');live.className='sr-only';live.setAttribute('aria-live','polite');live.id='matrix-live';
+ $('heatmap').parentNode.appendChild(live);
+ function announce(){
+   const n=state.selected?currentRows().filter(r=>r.policy_stage===state.selected.stage&&r.hci_dimension===state.selected.dimension).length:currentRows().length;
+   live.textContent=state.selected?`${state.selected.dimension} × ${state.selected.stage} 선택, 연결 문헌 ${n}건. 아래 근거 표에 표시합니다.`:`선택 해제, 전체 ${n}건 표시.`;
+ }
+ $('heatmap').querySelector('tbody').addEventListener('keydown',ev=>{
+   const b=ev.target.closest('.heat-cell');if(!b)return;
+   let i=Number(b.dataset.i),j=Number(b.dataset.j);const H=rules.hciDimensions.length-1,P=rules.policyStages.length-1;
+   const moves={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
+   if(moves[ev.key]){i=Math.min(H,Math.max(0,i+moves[ev.key][0]));j=Math.min(P,Math.max(0,j+moves[ev.key][1]));}
+   else if(ev.key==='Home'){j=0;}else if(ev.key==='End'){j=P;}else return;
+   ev.preventDefault();state.focus={i,j};
+   $('heatmap').querySelectorAll('.heat-cell').forEach(x=>{x.tabIndex=(Number(x.dataset.i)===i&&Number(x.dataset.j)===j)?0:-1;});
+   $('heatmap').querySelector(`.heat-cell[data-i="${i}"][data-j="${j}"]`).focus();
+ });
  function linkFor(url,doi){
    if(doi && /^10\.\d{4,9}\/\S+$/.test(doi))return 'https://doi.org/'+encodeURI(doi);
    try {let u=new URL(url);return /^https?:$/.test(u.protocol)?u.href:'';}catch(e){return '';}
@@ -89,7 +110,7 @@
  window.addEventListener('civicta:add-records',ev=>{const d=ev.detail||{};load([...state.records,...(d.records||[])],[],d.label||'자동화 확정 문헌');});
  $('clear-data').addEventListener('click',()=>{state.records=[];state.warnings=[];state.selected=null;$('csv-text').value='';$('csv-file').value='';tell('자료를 비웠습니다.');render();});
  ['search','verification-filter','policy-filter','hci-filter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{state.selected=null;render();}));
- $('reset-selection').addEventListener('click',()=>{state.selected=null;render();});
+ $('reset-selection').addEventListener('click',()=>{state.selected=null;render();announce();});
  $('export-csv').addEventListener('click',()=>{if(typeof api.toCSV!=='function'){tell('js/export.js(B)가 아직 없습니다.',true);return;}const rows=currentRows();if(!rows.length){tell('내보낼 자료가 없습니다.',true);return;}download('civicta-literature.csv',api.toCSV(rows),'text/csv;charset=utf-8');});
  $('export-md').addEventListener('click',()=>{if(typeof api.toMarkdown!=='function'){tell('js/export.js(B)가 아직 없습니다.',true);return;}const rows=currentRows();if(!rows.length){tell('내보낼 자료가 없습니다.',true);return;}download('civicta-evidence-report.md',api.toMarkdown(rows,analyze(rows)),'text/markdown;charset=utf-8');});
  render();
