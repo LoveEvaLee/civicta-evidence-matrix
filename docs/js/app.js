@@ -112,7 +112,7 @@
  ['search','verification-filter','policy-filter','hci-filter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{state.selected=null;render();}));
  $('reset-selection').addEventListener('click',()=>{state.selected=null;render();announce();});
  $('export-csv').addEventListener('click',()=>{if(typeof api.toCSV!=='function'){tell('js/export.js(B)가 아직 없습니다.',true);return;}const rows=currentRows();if(!rows.length){tell('내보낼 자료가 없습니다.',true);return;}download('civicta-literature.csv',api.toCSV(rows),'text/csv;charset=utf-8');});
- $('export-md').addEventListener('click',()=>{if(typeof api.toMarkdown!=='function'){tell('js/export.js(B)가 아직 없습니다.',true);return;}const rows=currentRows();if(!rows.length){tell('내보낼 자료가 없습니다.',true);return;}download('civicta-evidence-report.md',api.toMarkdown(rows,analyze(rows)),'text/markdown;charset=utf-8');});
+ $('export-md').addEventListener('click',()=>{if(typeof api.toMarkdown!=='function'){tell('js/export.js(B)가 아직 없습니다.',true);return;}const rows=currentRows();if(!rows.length){tell('내보낼 자료가 없습니다.',true);return;}download('civicta-evidence-report.md',api.toMarkdown(rows,analyze(rows),rules,{total:state.records.length,allRecords:state.records,warnings:state.warnings,filters:{keyword:$('search').value,verification:$('verification-filter').value,policy_stage:$('policy-filter').value,hci_dimension:$('hci-filter').value}}),'text/markdown;charset=utf-8');});
  render();
  if(missing.length)tell('연결되지 않은 담당 파일: '+missing.join(', ')+' — 예시는 임시 대체로 볼 수 있습니다.',true);
 })();
