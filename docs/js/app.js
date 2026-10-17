@@ -6,7 +6,7 @@
  const missing=[['parseCSV','js/import.js (A)'],['validateAndNormalize','js/normalize.js (A)'],['analyze','js/matrix.js (B)'],['toMarkdown','js/export.js (B)']].filter(([fn])=>typeof api[fn]!=='function').map(([,f])=>f);
  // 담당 파일이 연결되지 않아도 예시는 볼 수 있게 하는 임시 대체. 실제 처리는 각 담당 파일이 맡는다.
  const normalize=api.validateAndNormalize||(recs=>({records:recs.map(r=>{const o={...r};if(!rules.policyStages.includes(o.policy_stage))o.policy_stage='미분류';if(!rules.hciDimensions.includes(o.hci_dimension))o.hci_dimension='미분류';return o;}),warnings:['임시 대체: js/normalize.js(A)가 연결되지 않아 범주 확인만 했습니다.']}));
- const filterRecords=api.filterRecords||((recs,p)=>{const q=String(p.keyword||'').toLowerCase();return recs.filter(r=>(!q||[r.title,r.notes,r.doi,r.technology].join(' ').toLowerCase().includes(q))&&(p.verification==='all'||r.verification===p.verification)&&(p.policy_stage==='all'||r.policy_stage===p.policy_stage));});
+ const filterRecords=api.filterRecords||((recs,p)=>{const q=String(p.keyword||'').toLowerCase();return recs.filter(r=>(!q||[r.title,r.notes,r.doi,r.technology].join(' ').toLowerCase().includes(q))&&(p.verification==='all'||r.verification===p.verification)&&(p.policy_stage==='all'||r.policy_stage===p.policy_stage)&&(!p.hci_dimension||p.hci_dimension==='all'||r.hci_dimension===p.hci_dimension));});
  const analyze=api.analyze||(recs=>{const cells=rules.hciDimensions.map(h=>rules.policyStages.map(s=>recs.filter(r=>r.hci_dimension===h&&r.policy_stage===s)));const counted=cells.flat(2).length;
    return {cells,count:recs.length,counted,unclassified:recs.length-counted,gaps:cells.flat(1).filter(c=>!c.length).length,traceable:recs.filter(r=>r.policy_linkage==='반영 근거 확인').length,demo:recs.some(r=>r.verification==='시연용 가상자료'),countsByHci:rules.hciDimensions.map((name,i)=>({name,value:cells[i].reduce((a,b)=>a+b.length,0)}))};});
  const state={records:[], warnings:[], selected:null};
@@ -14,15 +14,16 @@
  const options=(id,values)=>{ const el=$(id);values.forEach(value=>{const node=document.createElement('option');node.value=value;node.textContent=value;el.appendChild(node);});};
  options('verification-filter',rules.verificationStates);
  options('policy-filter',rules.policyStages);
+ options('hci-filter',rules.hciDimensions);
  function tell(msg,isError=false){$('status-message').textContent=msg;$('status-message').classList.toggle('error',isError);}
  function load(records,warnings=[],label='사용자 자료'){
    const validated=normalize(records);
    state.records=validated.records;state.warnings=[...warnings,...validated.warnings];state.selected=null;
-   $('search').value='';$('policy-filter').value='all';$('verification-filter').value='all';
+   $('search').value='';$('policy-filter').value='all';$('hci-filter').value='all';$('verification-filter').value='all';
    tell(`${label}: ${state.records.length}건을 읽었습니다. 분류 미확정 기록과 오류 안내를 확인하세요.`);
    render();
  }
- function currentRows(){return filterRecords(state.records,{keyword:$('search').value,verification:$('verification-filter').value,policy_stage:$('policy-filter').value});}
+ function currentRows(){return filterRecords(state.records,{keyword:$('search').value,verification:$('verification-filter').value,policy_stage:$('policy-filter').value,hci_dimension:$('hci-filter').value});}
  function renderWarnings(){const box=$('warning-box');box.hidden=!state.warnings.length;$('warning-items').replaceChildren();
    state.warnings.slice(0,25).forEach(t=>{const li=document.createElement('li');li.textContent=t;$('warning-items').appendChild(li);});
    if(state.warnings.length>25){const li=document.createElement('li');li.textContent=`그 외 ${state.warnings.length-25}건`; $('warning-items').appendChild(li);}}
@@ -87,7 +88,7 @@
  // 자동화 패널(auto-panel.js)이 사람이 확정한 문헌을 보내면 지금 자료 뒤에 붙인다.
  window.addEventListener('civicta:add-records',ev=>{const d=ev.detail||{};load([...state.records,...(d.records||[])],[],d.label||'자동화 확정 문헌');});
  $('clear-data').addEventListener('click',()=>{state.records=[];state.warnings=[];state.selected=null;$('csv-text').value='';$('csv-file').value='';tell('자료를 비웠습니다.');render();});
- ['search','verification-filter','policy-filter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{state.selected=null;render();}));
+ ['search','verification-filter','policy-filter','hci-filter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{state.selected=null;render();}));
  $('reset-selection').addEventListener('click',()=>{state.selected=null;render();});
  $('export-csv').addEventListener('click',()=>{if(typeof api.toCSV!=='function'){tell('js/export.js(B)가 아직 없습니다.',true);return;}const rows=currentRows();if(!rows.length){tell('내보낼 자료가 없습니다.',true);return;}download('civicta-literature.csv',api.toCSV(rows),'text/csv;charset=utf-8');});
  $('export-md').addEventListener('click',()=>{if(typeof api.toMarkdown!=='function'){tell('js/export.js(B)가 아직 없습니다.',true);return;}const rows=currentRows();if(!rows.length){tell('내보낼 자료가 없습니다.',true);return;}download('civicta-evidence-report.md',api.toMarkdown(rows,analyze(rows)),'text/markdown;charset=utf-8');});

@@ -60,6 +60,13 @@ check('B 범위: 필수 열만 있는 레코드도 검색 오류 없음 (#3)',['
   assert.equal(A.filterRecords(only,{keyword:'zzz'}).length,0);
   assert.equal(A.filterRecords([{id:'y',title:'T',notes:null,doi:undefined,technology:2024}],{keyword:'2024'}).length,1);
 });
+check('공동: HCI 차원 필터와 필터 3종 조합 (#7)',[...M,'filterRecords'],()=>{
+  const F=p=>A.filterRecords(CIVICTA_REAL,p);
+  assert.equal(F({hci_dimension:'숙의·상호작용'}).length,7);
+  const both=F({hci_dimension:'숙의·상호작용',policy_stage:'숙의·공론화',verification:'초록 검토'});
+  assert.equal(both.length,5);assert.equal(A.analyze(both).counted,both.length);
+  assert.deepEqual(F({hci_dimension:'숙의·상호작용',keyword:'deliberation'}).map(r=>r.id),['REF-03','REF-11','REF-12']);
+});
 check('B 범위: 보고서 숫자 = 집계 숫자',[...M,...E],()=>{
   const md=A.toMarkdown(CIVICTA_REAL,A.analyze(CIVICTA_REAL));
   assert(md.includes('집계 대상: 16건'));assert(md.includes('표본에서 미관찰된 조합: 12개'));
