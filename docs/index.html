@@ -27,7 +27,7 @@
             <button type="button" class="button ghost" id="load-demo">가상 예시 12건(기능 시연)</button>
             <a class="button ghost" href="#upload">내 문헌 자료 입력하기</a>
           </div>
-          <p class="hero-fine">실존 16편은 Crossref DOI 확인 · 초록 기준 코딩 초안 · 원문 검토 전<br>규칙 기반 처리 · API 키 불필요 · 브라우저 내 분석 · GitHub Pages 호환</p>
+          <p class="hero-fine">실존 16편은 Crossref DOI 확인 · 초록 기준 코딩 초안 · 원문 검토 전<br>두 가지 방식: API 키 없이 샘플 보기 · 개인 API 키로 자동화 실행 · GitHub Pages 호환</p>
         </div>
         <div class="hero-side" aria-hidden="true">
           <div class="hero-side-heading">RESEARCH LOGIC <span>01 — 04</span></div>
@@ -56,6 +56,49 @@
         </div>
         <p class="status" id="status-message" role="status" aria-live="polite">'실존 문헌 16편'(DOI 확인 · 초록 기준 코딩 초안) 또는 '가상 예시 12건'(기능 시연용)을 불러오세요.</p>
         <div id="warning-box" class="warning-box" hidden><strong>확인할 항목</strong><ul id="warning-items"></ul></div>
+      </section>
+      <section id="automation" class="panel" aria-labelledby="auto-title">
+        <div class="section-heading"><div><span class="section-number">01-B / AUTOMATION</span><h2 id="auto-title">DOI로 초록 수집 → AI 코딩 제안 → 사람이 확정</h2><p>AI는 제안만 합니다. 사람이 확인하고 확정한 문헌만 매트릭스에 들어갑니다.</p></div><span class="chip blue" id="auto-mode-chip">샘플 모드</span></div>
+        <div class="mode-tabs" role="tablist" aria-label="자동화 방식">
+          <button type="button" role="tab" id="tab-sample" aria-selected="true" aria-controls="pane-sample">① 샘플 보기 <small>API 키 없음</small></button>
+          <button type="button" role="tab" id="tab-live" aria-selected="false" aria-controls="pane-live">② 실제 자동화 <small>개인 API 키</small></button>
+        </div>
+        <div id="pane-sample" role="tabpanel" aria-labelledby="tab-sample" class="mode-pane">
+          <p class="pane-copy">실존 문헌 6편에 대한 AI 제안 <strong>견본</strong>을 불러옵니다. 네트워크와 API 키가 없어도 됩니다. 견본은 실제 API 호출 결과가 아니며, 사람 코딩과 다른 제안 2건을 고쳐 확정하는 연습에 씁니다.</p>
+          <div class="actions-row"><button type="button" class="button primary" id="auto-sample">자동화 견본 6편 불러오기</button></div>
+        </div>
+        <div id="pane-live" role="tabpanel" aria-labelledby="tab-live" class="mode-pane" hidden>
+          <div class="input-grid">
+            <div>
+              <label class="field-label" for="auto-dois">DOI 목록 (한 줄에 하나)</label>
+              <textarea id="auto-dois" class="mono-box" rows="5" spellcheck="false" placeholder="10.1016/j.giq.2024.101954&#10;https://doi.org/10.1145/3643057"></textarea>
+              <div class="hint">초록 수집은 공개 API(OpenAlex · Crossref)를 써서 <strong>키 없이</strong> 됩니다. 최대 30편.</div>
+            </div>
+            <div>
+              <label class="field-label" for="auto-key">내 Anthropic API 키</label>
+              <input id="auto-key" class="text-input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-...">
+              <label class="field-label small-gap" for="auto-model">모델</label>
+              <select id="auto-model" class="text-input"></select>
+              <label class="check"><input type="checkbox" id="auto-remember"> 이 탭을 닫을 때까지만 키 기억</label>
+              <p class="hint" id="auto-estimate">예상 비용은 DOI를 넣으면 표시됩니다.</p>
+            </div>
+          </div>
+          <div class="actions-row wrap-row">
+            <button type="button" class="button secondary" id="auto-fetch">1. 초록 수집 (키 불필요)</button>
+            <button type="button" class="button primary" id="auto-run">2. AI 코딩 제안 받기 (키 필요)</button>
+            <button type="button" class="button subtle" id="auto-forget">키 지우기</button>
+          </div>
+          <p class="key-note">키는 각자 본인 것을 이 화면에만 넣습니다. 저장소·CSV·보고서에는 남지 않고, 이 브라우저에서 Anthropic API로만 전송됩니다. 공용 PC·화면 녹화·화면 공유 중에는 넣지 마세요. 호출 비용은 키 주인의 계정에 청구됩니다.</p>
+        </div>
+        <p class="status" id="auto-status" role="status" aria-live="polite"></p>
+        <div class="table-scroll" id="auto-review-wrap" hidden>
+          <table class="records-table auto-table" id="auto-review"><thead><tr><th>확정</th><th>문헌</th><th>AI 제안 · 근거</th><th>정책 단계</th><th>HCI 차원</th><th>사람 코딩과 비교</th></tr></thead><tbody></tbody></table>
+          <div class="actions-row wrap-row">
+            <button type="button" class="button subtle small" id="auto-check-all">제안 있는 문헌 모두 선택</button>
+            <button type="button" class="button primary small" id="auto-apply">확정한 문헌을 매트릭스에 추가</button>
+            <button type="button" class="button secondary small" id="auto-export">제안 CSV 내보내기</button>
+          </div>
+        </div>
       </section>
       <section class="stat-grid" aria-label="분석 현황">
         <article class="stat-card"><span>분석 대상 문헌</span><strong id="stat-total">0</strong><small>현재 필터 기준</small></article>
@@ -92,8 +135,10 @@
       <footer class="footer"><span><strong>CivicTA</strong> — Technology Assessment × HCI</span><span>독립적 검증 필요 · AI 자동 판단 없음 · 개인/비공개 정보 업로드 금지</span></footer>
     </div>
   </main>
-  <script src="rules.js"></script><script src="demo-data.js"></script><script src="real-data.js"></script>
+  <script src="rules.js"></script><script src="demo-data.js"></script><script src="real-data.js"></script><script src="ai-sample.js"></script>
   <!-- A(팀원): js/import.js · js/normalize.js  /  B(소유자): js/matrix.js · js/export.js  /  공동: js/app.js -->
   <script src="js/import.js"></script><script src="js/normalize.js"></script><script src="js/matrix.js"></script><script src="js/export.js"></script><script src="js/app.js"></script>
+  <!-- 자동화: js/ai.js(호출·검사) · js/auto-panel.js(화면) -->
+  <script src="js/ai.js"></script><script src="js/auto-panel.js"></script>
 </body>
 </html>
