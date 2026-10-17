@@ -67,6 +67,25 @@ check('공동: HCI 차원 필터와 필터 3종 조합 (#7)',[...M,'filterRecord
   assert.equal(both.length,5);assert.equal(A.analyze(both).counted,both.length);
   assert.deepEqual(F({hci_dimension:'숙의·상호작용',keyword:'deliberation'}).map(r=>r.id),['REF-03','REF-11','REF-12']);
 });
+check('B 범위: 보고서에 분석 범위·미분류 사유·경고 기록 (#6)',[...M,...E,'filterRecords'],()=>{
+  const recs=[{id:'T-02',title:'a',policy_stage:'미분류',hci_dimension:'접근성·포용성'},{id:'T-06',title:'b',policy_stage:'정책설계·결정',hci_dimension:'미분류'},
+    {id:'T-01',title:'c',policy_stage:'숙의·공론화',hci_dimension:'숙의·상호작용'}];
+  const warnings=['3줄 T-02: 등록되지 않은 정책단계 → 미분류 (공론화).','7줄 T-05: 중복 DOI (10.1/x, 먼저 나온 T-01) — 자동 삭제하지 않음.'];
+  const rows=A.filterRecords(recs,{policy_stage:'all',hci_dimension:'all'});
+  const md=A.toMarkdown(rows,A.analyze(rows),CIVICTA_RULES,{total:6,warnings,filters:{keyword:'a',policy_stage:'숙의·공론화'}});
+  assert(md.includes('불러온 문헌: 6건 → 필터 결과(이 보고서의 집계 대상): 3건'));
+  assert(md.includes("검색어: 'a' · 검토 수준: 전체 · 정책 단계: 숙의·공론화 · HCI 차원: 전체"));
+  assert(md.includes("| T-02 | a | 정책 단계: 목록 밖 값 '공론화' |"));assert(md.includes('| T-06 | b | HCI 차원: 빈칸 |'));
+  assert(md.includes('## 입력 경고 (2건)'));assert(md.includes('- 미분류: 2건'));
+  assert(A.toMarkdown(CIVICTA_REAL,A.analyze(CIVICTA_REAL)).includes('## 미분류 문헌과 사유 (0건)'));
+});
+check('전체 흐름: other-input.csv를 정책 단계로 걸러도 보고서 숫자 = 화면 숫자 (#6)',[...P,...N,...M,...E],()=>{
+  const p=A.parseCSV(read('other-input.csv')),n=A.validateAndNormalize(p.records),warnings=[...p.warnings,...n.warnings];
+  const all=A.toMarkdown(n.records,A.analyze(n.records),CIVICTA_RULES,{total:n.records.length,warnings});
+  assert(all.includes('## 미분류 문헌과 사유 (2건)'));assert(all.includes("목록 밖 값 '공론화'"));assert(all.includes('HCI 차원: 빈칸'));
+  const rows=A.filterRecords(n.records,{policy_stage:'집행·평가'}),md=A.toMarkdown(rows,A.analyze(rows),CIVICTA_RULES,{total:6,allRecords:n.records,warnings,filters:{policy_stage:'집행·평가'}});
+  assert(md.includes(`집계 대상: ${rows.length}건`));assert(md.includes('## 미분류 문헌과 사유 (2건, 불러온 문헌 전체 기준)'));assert(md.includes(`필터 결과(이 보고서의 집계 대상): ${rows.length}건`));
+});
 check('B 범위: 보고서 숫자 = 집계 숫자',[...M,...E],()=>{
   const md=A.toMarkdown(CIVICTA_REAL,A.analyze(CIVICTA_REAL));
   assert(md.includes('집계 대상: 16건'));assert(md.includes('표본에서 미관찰된 조합: 12개'));
