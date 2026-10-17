@@ -84,6 +84,8 @@
    const file=ev.target.files?.[0];if(!file)return;if(typeof api.parseCSV!=='function'){tell('js/import.js(A)가 아직 없습니다.',true);return;}
    try{const parsed=api.parseCSV(await file.text());load(parsed.records,parsed.warnings,`${file.name}`);}catch(e){tell(e.message,true);}
  });
+ // 자동화 패널(auto-panel.js)이 사람이 확정한 문헌을 보내면 지금 자료 뒤에 붙인다.
+ window.addEventListener('civicta:add-records',ev=>{const d=ev.detail||{};load([...state.records,...(d.records||[])],[],d.label||'자동화 확정 문헌');});
  $('clear-data').addEventListener('click',()=>{state.records=[];state.warnings=[];state.selected=null;$('csv-text').value='';$('csv-file').value='';tell('자료를 비웠습니다.');render();});
  ['search','verification-filter','policy-filter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{state.selected=null;render();}));
  $('reset-selection').addEventListener('click',()=>{state.selected=null;render();});
