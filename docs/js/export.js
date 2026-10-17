@@ -14,7 +14,10 @@ window.CIVICTA = window.CIVICTA || {};
  function unclassifiedReasons(rows,warnings=[]){
    const fields=[['policy_stage','정책단계','정책 단계'],['hci_dimension','HCI 차원','HCI 차원']];
    return rows.filter(r=>r.policy_stage==='미분류'||r.hci_dimension==='미분류').map(r=>{
-     const why=fields.filter(([k])=>r[k]==='미분류').map(([,word,label])=>{
+     const why=fields.filter(([k])=>r[k]==='미분류').map(([k,word,label])=>{
+       // normalize.js가 남긴 원래 값(raw_*)을 먼저 본다. 없으면 경고 문구에서 찾는다 (Refs #4)
+       const raw=String(r['raw_'+k]??'').trim();
+       if(raw&&raw!=='미분류')return `${label}: 목록 밖 값 '${raw}'`;
        const hit=warnings.find(t=>(' '+t).includes(' '+r.id+':')&&t.includes('등록되지 않은 '+word));
        const m=hit&&hit.match(/→ 미분류 \((.*)\)\.?$/);
        return m?`${label}: 목록 밖 값 '${m[1]}'`:`${label}: 빈칸`;
