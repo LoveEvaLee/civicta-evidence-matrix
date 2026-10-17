@@ -46,6 +46,19 @@ check('담당 파일 없이 쓰는 미리 읽어 둔 실존 16편이 CSV와 같�
   const ids=plain(CIVICTA_REAL_CSV).split('\n').slice(1).filter(Boolean).map(l=>l.split(',')[0]);
   assert.deepEqual(CIVICTA_REAL.map(r=>r.id),ids);
 });
+check('B 범위: 미리 읽어 둔 실존 16편으로 칸 손 검산·필터',[...M,'filterRecords'],()=>{
+  const m=A.analyze(CIVICTA_REAL),R=CIVICTA_RULES;
+  const cell=(h,s)=>m.cells[R.hciDimensions.indexOf(h)][R.policyStages.indexOf(s)].map(r=>r.id);
+  assert.equal(m.counted,16);assert.equal(m.gaps,12);
+  assert.deepEqual(cell('숙의·상호작용','숙의·공론화'),['REF-01','REF-03','REF-08','REF-11','REF-12']);
+  assert.deepEqual(m.countsByHci.map(o=>o.value),[3,2,7,1,3]);
+  assert.equal(A.filterRecords(CIVICTA_REAL,{policy_stage:'숙의·공론화'}).length,8);
+});
+check('B 범위: 보고서 숫자 = 집계 숫자',[...M,...E],()=>{
+  const md=A.toMarkdown(CIVICTA_REAL,A.analyze(CIVICTA_REAL));
+  assert(md.includes('집계 대상: 16건'));assert(md.includes('표본에서 미관찰된 조합: 12개'));
+  assert(md.includes('| 숙의·상호작용 | 2 | 5 | 0 | 0 |'));assert(!md.includes('실증 분석 결과가 아닙니다'));
+});
 check('다른 입력: 제외 2줄·미분류 2·중복 DOI·형식·연도 경고',[...P,...N,...M],()=>{
   const p=A.parseCSV(read('other-input.csv'));
   assert.equal(p.records.length,6);
