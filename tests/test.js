@@ -54,6 +54,12 @@ check('B 범위: 미리 읽어 둔 실존 16편으로 칸 손 검산·필터',[.
   assert.deepEqual(m.countsByHci.map(o=>o.value),[3,2,7,1,3]);
   assert.equal(A.filterRecords(CIVICTA_REAL,{policy_stage:'숙의·공론화'}).length,8);
 });
+check('B 범위: 필수 열만 있는 레코드도 검색 오류 없음 (#3)',['filterRecords'],()=>{
+  const only=[{id:'x',title:'Civic deliberation',year:'2020',policy_stage:'의제설정',hci_dimension:'접근성·포용성'}];
+  assert.equal(A.filterRecords(only,{keyword:'a'}).length,1);
+  assert.equal(A.filterRecords(only,{keyword:'zzz'}).length,0);
+  assert.equal(A.filterRecords([{id:'y',title:'T',notes:null,doi:undefined,technology:2024}],{keyword:'2024'}).length,1);
+});
 check('B 범위: 보고서 숫자 = 집계 숫자',[...M,...E],()=>{
   const md=A.toMarkdown(CIVICTA_REAL,A.analyze(CIVICTA_REAL));
   assert(md.includes('집계 대상: 16건'));assert(md.includes('표본에서 미관찰된 조합: 12개'));

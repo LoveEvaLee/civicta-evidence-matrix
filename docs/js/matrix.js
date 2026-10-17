@@ -1,9 +1,10 @@
 window.CIVICTA = window.CIVICTA || {};
 (function(api){
   'use strict';
+  // 선택 열(notes·doi·technology)이 없는 레코드도 검색할 수 있게 빈 값은 ''로 본다 (Refs #3)
   function filterRecords(records,params={}){
     const q=String(params.keyword||'').toLocaleLowerCase('ko');
-    return records.filter(r=>(!q || ['title','notes','doi','technology'].some(k=>r[k].toLocaleLowerCase('ko').includes(q))) &&
+    return records.filter(r=>(!q || ['title','notes','doi','technology'].some(k=>String(r[k]??'').toLocaleLowerCase('ko').includes(q))) &&
      (!params.verification || params.verification==='all' || r.verification===params.verification) &&
      (!params.policy_stage || params.policy_stage==='all' || r.policy_stage===params.policy_stage) &&
      (!params.hci_dimension || params.hci_dimension==='all' || r.hci_dimension===params.hci_dimension));
