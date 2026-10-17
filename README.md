@@ -10,10 +10,15 @@
 문헌 목록 CSV를 넣으면 `docs/rules.js`의 코딩 기준대로 정리해 **HCI 차원(5) × 정책 단계(4)** 매트릭스를 만듭니다. 칸을 누르면 근거 문헌이 나오고 CSV·마크다운으로 내보낼 수도 있습니다.
 
 ## 배포 주소
-- 소유자(morins): https://morins.github.io/civicta-evidence-matrix/
-- 팀원(NewQuokka, fork): https://newquokka.github.io/civicta-evidence-matrix/
+- 소유자(morins): https://morins.github.io/civicta-evidence-matrix/ — 확인 완료(2026-10-18, main `/docs`)
+- 팀원(NewQuokka, fork): https://newquokka.github.io/civicta-evidence-matrix/ — 확인 완료(2026-10-18)
 
-(⑤ 배포 단계에서 두 주소를 시크릿 창으로 확인한 뒤 이 줄을 '확인 완료'로 바꿉니다.)
+## 설명영상 (30초 안팎)
+배포 주소를 그대로 녹화하고, 내레이션은 팀원 목소리로 넣었습니다. 실존 문헌 16편 → 매트릭스 → 키보드로 칸 선택 → 자동화 견본을 사람이 고쳐 확정 → 보고서 내보내기 순서입니다.
+
+[![설명영상 미리보기](media/intro-teaser.gif)](media/intro.mp4)
+
+- 영상 파일: [media/intro.mp4](media/intro.mp4) (1280×720, 10MB 이하) · 대본: [reports/시연영상_스토리보드.md](reports/시연영상_스토리보드.md)
 
 ## 두 가지 예시 입력
 | 버튼 | 파일 | 성격 |
