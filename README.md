@@ -72,6 +72,7 @@ id,title,year,doi,technology,policy_stage,hci_dimension,evidence_type,policy_lin
 
 - 기준(`docs/rules.js`)을 바꿀 때는 브랜치 → PR → 상대 리뷰 → 병합. 내 PR은 내가 승인하지 않습니다.
 - 커밋·PR에는 `Refs #이슈번호`를 쓰고 완료 조건을 확인한 뒤 이슈를 닫습니다.
+- `main`은 보호 브랜치입니다. PR → 상대 승인 1명 → 테스트(GitHub Actions `tests`) 통과 뒤에만 병합되고, 강제 푸시와 삭제는 막혀 있습니다. 검사는 `node tests/test.js`·`node tests/ai.test.js`와 같습니다.
 
 ## 파일
 ```

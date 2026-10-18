@@ -1,0 +1,19 @@
+# PR과 main 푸시마다 테스트를 돌린다. main 보호 규칙의 '테스트 통과' 조건이 이 작업(tests)을 본다.
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 집계·내보내기·가져오기 검사
+        run: node tests/test.js
+      - name: 자동화(AI 제안) 검사
+        run: node tests/ai.test.js
